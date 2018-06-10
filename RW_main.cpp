@@ -16,6 +16,7 @@ int won_value = 0;
 bool color_bet_flag = false;
 bool num_bet_flag = false;
 bool MS_bet_flag = false;
+bool RW_MS_bet_flag = false;
 
 string color_bet = "Nothing Bet";
 int bet_num[38] = { 0 };
@@ -168,13 +169,14 @@ int main() {
 	while (1) {
 		int result = 0;
 		int num_index = 0;
-		while (MS_bet_flag == false) {
+		while (MS_bet_flag == false && RW_MS_bet_flag == false) {
 			cout << "Place your bet..." << endl
 				<< "Please choose from one of the following betting option" << endl
 				<< "[1] Color" << endl
 				<< "[2] Number" << endl
 				<< "[3] Finished Betting" << endl
-				<< "[4] Fast Simulation (Martingale Strategy)" << endl;
+				<< "[4] Fast Simulation (Martingale Strategy)" << endl
+				<< "[5] Fast Simulation (Reverse Martingale Strategy)" << endl;
 
 			cin >> menu_flag;
 
@@ -213,6 +215,21 @@ int main() {
 				MS_bet_flag = true;
 				break;
 			}
+			else if (menu_flag == 5) {
+				//Select strategy
+				//Reverse Martingale Strategy (Only on Black or Red)
+				cout << "Choose a color to bet on" << endl
+					<< "Red" << endl
+					<< "Black" << endl;
+				//min 10 for reality 
+				cin >> color_bet;
+				cout << "Initial Bet Amount?" << endl;
+				cin >> cbet;
+				cbet_init_ = cbet;
+				color_bet_flag = true;
+				RW_MS_bet_flag = true;
+				break;
+			}
 		}
 		
 		/////////////////////////////////////////////////////////
@@ -223,6 +240,20 @@ int main() {
 			}
 			else {
 				cbet = cbet_init_;
+			}
+			bet_limit = money - cbet;
+			if (bet_limit < 0) {
+				cbet = money;
+			}
+		}
+		/////////////////////////////////////////////////////////
+		//RW_MS
+		if (menu_flag == 5) {
+			if (!win) {
+				cbet = cbet_init_;
+			}
+			else {
+				cbet = cbet * 2;
 			}
 			bet_limit = money - cbet;
 			if (bet_limit < 0) {
