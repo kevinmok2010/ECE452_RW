@@ -16,7 +16,15 @@ public:
 private:
 	int number;
 	std::string color;
-	
+};
+
+class Result
+{
+public:
+	int result_number;
+	std::string result_color;
+	std::string result_hl;
+	std::string result_eo;
 };
 
 #endif

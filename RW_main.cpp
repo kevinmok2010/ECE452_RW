@@ -8,68 +8,117 @@
 
 using namespace std;
 
-int board_arr[] = { 0 };
-int cbet = 0;
-int nbet = 0;
-int won_value = 0;
+Result object;
 
-bool color_bet_flag = false;
-bool num_bet_flag = false;
+int board_arr[38] = { 0 };
+int cbet = 0;
+int hlbet = 0;
+int nbet[38] = { 0 };
+int won_value = 0;
+int bet_total = 0;
+
+int color_bet_flag = 0;
+int num_bet_flag = 0;
+int hl_bet_flag = 0;
 bool MS_bet_flag = false;
 bool RW_MS_bet_flag = false;
+bool CDA_bet_flag = false;
+bool DA_bet_flag = false;
+bool fibon_bet_flag = false;
+bool jb_bet_flag = false;
+
+int jb_arr[8] = { 13,14,15,16,17,18,0,37 };
+int jb_nbet_arr_init_[8] = { 10,5,10,10,5,10,10,10 };
+int jb_nbet_arr[8] = { 10,5,10,10,5,10,10,10 };
 
 string color_bet = "Nothing Bet";
+string high_low = "Nothing Bet";
 int bet_num[38] = { 0 };
 int money = 1000;
+int num_index = 0;
 bool status = false;
 
 bool win = true;
 
 	void RW_Classification::winning(RW_Classification arr[], int num) {
 		won_value = 0;
-		if (color_bet_flag) {
-			//RED & BLACK
-			if (arr[num].color == color_bet) {
-				//win Bet * 2 (1:1)
-				won_value += cbet;
-				win = true;
+		while (1) {
+			if (color_bet_flag) {
+				//RED & BLACK
+				if (object.result_color == color_bet) {
+					won_value += cbet;
+					color_bet_flag = 0;
+				}
+				else {
+					//win nothing
+					won_value = won_value - cbet;
+					color_bet_flag = 0;
+				}
 			}
-			else {
-				//win nothing
-				won_value = won_value - cbet;
-				win = false;
+			else if (num_bet_flag) {
+				//0-37
+				for (int i = 0; i < num_index; i++) {
+					if (object.result_number == bet_num[i]) {
+						won_value = won_value + (35 * nbet[i]);
+					}
+					else {
+						won_value = won_value - nbet[i];
+					}
+				}
+				num_bet_flag = 0;
 			}
+			else if (hl_bet_flag) {
+				//HIGH & LOW
+				if (object.result_hl == high_low) {
+					won_value += hlbet;
+				}
+				else {
+					//win nothing
+					won_value = won_value - hlbet;
+				}
+				hl_bet_flag = 0;
+			}
+			else 
+			{break;}
 		}
 
-		if (num_bet_flag) {
-		//0-37
-			if (arr[num].number == bet_num[num]) {
-				won_value += 35;
-			}
-			else {
-				won_value = won_value - 35;
-			}
-		}
+		if (won_value > 0) { win = true;}
+		else { win = false;}
+
 		money = money + won_value;
-		cout << "Amount bet: $" << cbet << endl;
 		cout << "Money gain/loss for last round: $" << won_value << "	New Balance: $" << money << endl << endl;
-
-	
 
 	}
 
 	void RW_Classification::result(RW_Classification arr[], int num){
 		cout << "Result drawn for this round: " << num << endl
 			<< "Color: " << arr[num].color ;
+		object.result_color = arr[num].color;
+		object.result_number = num;
 		int eo_check = 0;
 		eo_check = num % 2;
 
 		if (eo_check != 0) {
 			cout << "	ODD" << endl;
+			object.result_eo = "odd";
 		}
 		else {
 			cout << "	EVEN" << endl;
+			object.result_eo = "even";
 		}
+		if (arr[num].number >= 1 && arr[num].number <= 18) {
+			cout << "LOW" << endl;
+			object.result_hl = "low";
+		}
+		else if (arr[num].number >= 19 && arr[num].number <= 36) {
+			cout << "HIGH" << endl;
+			object.result_hl = "high";
+		}
+		else {
+			cout << "ZERO" << endl;
+			object.result_number = 0;
+		}
+
 	}
 
 	//Assinging color to number
@@ -156,7 +205,12 @@ int main() {
 	int menu_flag = 0;
 	int round = 0;
 	int cbet_init_ = 0;
+	int hlbet_init_ = 0;
 	int bet_limit = 0;
+	int fibon_pre = 0;
+	int jb_pre[] = { 0 };
+	int jb_temp[] = { 0 };
+
 	srand(time(NULL));
 	ofstream myfile;
 
@@ -165,18 +219,32 @@ int main() {
 		<< "Trial	Bet Ammout	Win/Loss	New Balance" << endl;
 
 	myfile.close();
-
+	color_bet_flag = 0;
+	num_bet_flag = 0;
+	hl_bet_flag = 0;
+	MS_bet_flag = false;
+	RW_MS_bet_flag = false;
+	CDA_bet_flag = false;
+	DA_bet_flag = false;
+	fibon_bet_flag = false;
+	jb_bet_flag = false;
+	num_index = 0;
+	cout << "huh? " << cbet << endl;
 	while (1) {
 		int result = 0;
-		int num_index = 0;
-		while (MS_bet_flag == false && RW_MS_bet_flag == false) {
+
+		while (MS_bet_flag == false && RW_MS_bet_flag == false && CDA_bet_flag == false && DA_bet_flag == false && fibon_bet_flag == false && jb_bet_flag == false) {
 			cout << "Place your bet..." << endl
 				<< "Please choose from one of the following betting option" << endl
 				<< "[1] Color" << endl
 				<< "[2] Number" << endl
 				<< "[3] Finished Betting" << endl
 				<< "[4] Fast Simulation (Martingale Strategy)" << endl
-				<< "[5] Fast Simulation (Reverse Martingale Strategy)" << endl;
+				<< "[5] Fast Simulation (Reverse Martingale Strategy)" << endl
+				<< "[6] Fast Simulation (Contre DAlembert Strategy)" << endl
+				<< "[7] Fast Simulation (DAlembert Strategy)" << endl
+				<< "[8] Fast Simulation (Fibonacci Strategy)" << endl
+				<< "[9] Fast Simulation (Jame Bond Strategy)" << endl;
 
 			cin >> menu_flag;
 
@@ -187,15 +255,15 @@ int main() {
 				cin >> color_bet;
 				cout << "Bet Amount?" << endl;
 				cin >> cbet;
-				color_bet_flag = true;
+				color_bet_flag = 1;
 			}
 			else if (menu_flag == 2) {
 				cout << "What number? (0-36, 00 is represented by 37)" << endl;
 				cin >> bet_num[num_index];
 				cout << "Bet Amount?" << endl;
-				cin >> nbet;
+				cin >> nbet[num_index];
 				num_index++;
-				num_bet_flag = true;
+				num_bet_flag = 1;
 			}
 			else if (menu_flag == 3) {
 				break;
@@ -211,8 +279,8 @@ int main() {
 				cout << "Initial Bet Amount?" << endl;
 				cin >> cbet;
 				cbet_init_ = cbet;
-				color_bet_flag = true;
 				MS_bet_flag = true;
+				cout << "huh? " << cbet << endl;
 				break;
 			}
 			else if (menu_flag == 5) {
@@ -226,12 +294,69 @@ int main() {
 				cout << "Initial Bet Amount?" << endl;
 				cin >> cbet;
 				cbet_init_ = cbet;
-				color_bet_flag = true;
 				RW_MS_bet_flag = true;
 				break;
 			}
+			else if (menu_flag == 6) {
+				//Select strategy
+				// Contre D¡¯Alembert strategy (Only on Black or Red)
+				cout << "Choose a color to bet on" << endl
+					<< "Red" << endl
+					<< "Black" << endl;
+				//min 10 for reality 
+				cin >> color_bet;
+				cout << "Initial Bet Amount?" << endl;
+				cin >> cbet;
+				cbet_init_ = cbet;
+				CDA_bet_flag = true;
+				break;
+			}
+			else if (menu_flag == 7) {
+				//Select strategy
+				//D¡¯Alembert strategy (Only on Black or Red)
+				cout << "Choose a color to bet on" << endl
+					<< "Red" << endl
+					<< "Black" << endl;
+				//min 10 for reality 
+				cin >> color_bet;
+				cout << "Initial Bet Amount?" << endl;
+				cin >> cbet;
+				cbet_init_ = cbet;
+				DA_bet_flag = true;
+				break;
+			}
+			else if (menu_flag == 8) {
+				//Select strategy
+				//Fibonacci strategy (Only on Black or Red)
+				cout << "Choose a color to bet on" << endl
+					<< "Red" << endl
+					<< "Black" << endl;
+				//min 10 for reality 
+				cin >> color_bet;
+				cout << "Initial Bet Amount?" << endl;
+				cin >> cbet;
+				cbet_init_ = cbet;
+				fibon_bet_flag = true;
+				break;
+			}
+			else if (menu_flag == 9) {
+				//Select strategy
+				//Jame Bond strategy
+				//min 10 for reality 
+				high_low = "high";
+				hlbet = 140;
+				hlbet_init_ = hlbet;
+				for (int i = 0; i < 8; i++) {
+					//new betting array reset to init_ (coz won or init stage)
+					nbet[i] = jb_nbet_arr_init_[i];
+					bet_num[i] = jb_arr[i];
+				}
+				jb_bet_flag = true;
+				break;
+			}
 		}
-		
+
+//		hl_bet_flag = 1;
 		/////////////////////////////////////////////////////////
 		//MS
 		if (menu_flag == 4) {
@@ -245,6 +370,9 @@ int main() {
 			if (bet_limit < 0) {
 				cbet = money;
 			}
+			bet_total = cbet;
+			color_bet_flag = 1;
+			cout << "Amount bet: $" << bet_total << endl;
 		}
 		/////////////////////////////////////////////////////////
 		//RW_MS
@@ -259,6 +387,106 @@ int main() {
 			if (bet_limit < 0) {
 				cbet = money;
 			}
+			bet_total = cbet;
+			color_bet_flag = 1;
+			cout << "Amount bet: $" << bet_total << endl;
+		}
+		/////////////////////////////////////////////////////////
+		// Contre D¡¯Alembert strategy
+		if (menu_flag == 6) {
+			if (!win) {
+				cbet = cbet - 1;
+				if (cbet < cbet_init_) {
+					cbet = cbet_init_;
+				}
+			}
+			else {
+				cbet++;
+			}
+			bet_limit = money - cbet;
+			if (bet_limit < 0) {
+				cbet = money;
+			}
+			bet_total = cbet;
+			color_bet_flag = 1;
+			cout << "Amount bet: $" << bet_total << endl;
+		}
+		/////////////////////////////////////////////////////////
+		// D¡¯Alembert strategy
+		if (menu_flag == 7) {
+			if (!win) {
+				cbet ++;
+			}
+			else {
+				cbet = cbet - 1;
+				if (cbet < cbet_init_) {
+					cbet = cbet_init_;
+				}
+			}
+			bet_limit = money - cbet;
+			if (bet_limit < 0) {
+				cbet = money;
+			}
+			bet_total = cbet;
+			color_bet_flag = 1;
+			cout << "Amount bet: $" << bet_total << endl;
+		}
+		/////////////////////////////////////////////////////////
+		//The Fibonacci Strategy
+		if (menu_flag == 8) {
+			if (!win) {
+				cbet += fibon_pre;
+				fibon_pre = cbet;
+			}
+			else {
+				cbet = cbet - fibon_pre;
+				if (cbet < cbet_init_) {
+					cbet = cbet_init_;
+				}
+				fibon_pre = cbet;
+			}
+			bet_limit = money - cbet;
+			if (bet_limit < 0) {
+				cbet = money;
+			}
+			bet_total = cbet;
+			color_bet_flag = 1;
+			cout << "Amount bet: $" << bet_total << endl;
+		}
+		/////////////////////////////////////////////////////////
+		//James Bond Strategy
+		if (menu_flag == 9) {
+			int bet_total = 0;
+			num_index = 8;
+			if (!win) {
+				hlbet = hlbet * 2;
+				for (int i = 0; i < num_index; i++) {
+					nbet[i] = jb_nbet_arr[i] * 2;
+					jb_nbet_arr[i] = nbet[i];
+					bet_total += nbet[i];
+				}
+				bet_total += hlbet;
+			}
+			else {
+				hlbet = hlbet_init_;
+				for (int i = 0; i < num_index; i++) {
+					//temp = nbet init_
+					//new betting array reset to init_ (coz won or init stage)
+					nbet[i] = jb_nbet_arr_init_[i];
+					jb_nbet_arr[i] = nbet[i];
+					bet_total += nbet[i];
+				}
+				bet_total += hlbet;
+			}
+			bet_limit = money - bet_total;
+			if (bet_limit < 0) {
+				cout << "Don't have enough money for the next bet" << endl;
+				break;
+			}
+			cout << "Amount bet: $" << bet_total << endl;
+			num_bet_flag = 1;
+			hl_bet_flag = 1;
+			color_bet_flag = 0;
 		}
 		/////////////////////////////////////////////////////////
 		result = rand() % 38;         // v1 in the range 0 to 99
